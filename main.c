@@ -1,5 +1,6 @@
 #include "Includes.h"
 #define DIGIT_LEN		28
+#define DIGIT_TOTAL	(DIGIT_LEN*DIGIT_LEN)
 
 typedef struct node {
 	float (*conv)(float);	//do math shit
@@ -7,7 +8,7 @@ typedef struct node {
 }node;
 
 typedef struct{
-	u8 image[DIGIT_LEN * DIGIT_LEN];	//Store the image
+	u8 arr[DIGIT_TOTAL];	//Store the image
 }Digit;
 
 u32 linearize(u32 x, u32 y)
@@ -43,13 +44,37 @@ Digit* ReadDigits(const uint numDigits)
 		imgLenX = (imgLenX<<8)|(i32)fgetc(file);
 	}
 
-	Digit *arr = malloc(numDigits);
-	memset(arr, 0, numDigits);
+	Coord digitPos = {0};
+	Coord pixelPos = {0};
+	//Allocate the buffer
+	Digit *arr = malloc(numDigits * sizeof(Digit));
+	memset(arr, 0, numDigits * sizeof(Digit));
+	//Copy image sauce to our big-ass buffer
 	for(uint digit = 0; digit < numDigits; digit++){
-		for(uint pixel = 0; pixel < (imgLenX * imgLenY); pixel++){
-			arr[digit].image[pixel] = fgetc(file);
+		for(uint pixel = 0; pixel < DIGIT_TOTAL; pixel++){
+			const u8 val = fgetc(file);
+			arr[digit].arr[pixel] = val;
+			//Do the draw
+			setRGB(val, val, val);
+			drawPixelCoord(
+				coordOffset(coordMul(digitPos, DIGIT_LEN),pixelPos)
+			);
+			if(pixelPos.x++ > DIGIT_LEN){
+				pixelPos.x = 0;
+				if(pixelPos.y++ > DIGIT_LEN){
+					pixelPos.y = 0;
+				}
+			}
 		}
+		if(digitPos.x++ > gfx.xlen/DIGIT_LEN){
+			digitPos.x = 0;
+			if(digitPos.y++ > gfx.ylen/DIGIT_LEN){
+				digitPos.y = 0;
+			}
+		}
+		draw();
 	}
+	return arr;
 }
 
 int main(int argc, char const *argv[])
