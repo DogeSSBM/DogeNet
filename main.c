@@ -10,6 +10,7 @@ typedef struct{
 	u32 width;
 	u32 height;
 	u32 size;
+	u32 imgCount;
 }Digits;
 
 u32 linearize(Digits * buf, u32 x, u32 y, u32 z)
@@ -68,7 +69,8 @@ Digits ReadDigits()
 		calloc(imgCount, imgSize),
 		imgLenX,
 		imgLenY,
-		imgSize
+		imgSize,
+		imgCount
 	};
 
 	//Copy image sauce to our big-ass buffer
