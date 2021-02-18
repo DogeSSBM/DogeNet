@@ -1,35 +1,36 @@
 #include "Includes.h"
-#define DIGIT_LEN		28
-#define DIGIT_TOTAL	(DIGIT_LEN*DIGIT_LEN)
 
 typedef struct node {
 	float (*conv)(float);	//do math shit
-	int x,y;			//Visualization coordinates
+	int x,y;		//Visualization coordinates
 }node;
 
 typedef struct{
-	u8 arr[DIGIT_TOTAL];	//Store the image
-}Digit;
+	u8 *image;	//Store the image
+	u32 width;
+	u32 height;
+	u32 size;
+}Digits;
 
-u32 linearize(u32 x, u32 y)
+u32 linearize(Digits * buf, u32 x, u32 y, u32 z)
 {
-	return y * DIGIT_LEN + x;		//linearize the sauce
+	return (y * buf->width + x) + (z * buf->size);
 }
 
-void drawDigit(u8 *digit, uint digitNum)
+void drawDigit(Digits *buffer, uint digitNum)
 {
-	const uint xdigits = gfx.xlen/DIGIT_LEN;
-	for(int x = 0; x < DIGIT_LEN; x++){
-		for(int y = 0; y  < DIGIT_LEN; y++){
-			u8 val = digit[linearize(x, y)];
+	const uint xdigits = gfx.xlen/buffer->width;
+	for(int x = 0; x < buffer->width; x++){
+		for(int y = 0; y  < buffer->height; y++){
+			u8 val = buffer->image[linearize(buffer, x, y, digitNum)];
 			setRGB(val, val, val);
-			drawPixel(x + (digitNum%xdigits)*DIGIT_LEN,
-			          y + (digitNum/xdigits)*DIGIT_LEN);
+			drawPixel(x + (digitNum%xdigits)*buffer->width,
+			          y + (digitNum/xdigits)*buffer->height);
 		}
 	}
 }
 
-Digit* ReadDigits(const uint numDigits)
+Digits ReadDigits(const uint numDigits)
 {
 	File* file = fopen("./Data/train-images-idx3-ubyte", "r");
 	if(file == NULL){
@@ -37,7 +38,7 @@ Digit* ReadDigits(const uint numDigits)
 		exit(-1);
 	}
 	i32 magic = 0;
-	i32 imgNum = 0;
+	i32 imgCount = 0;
 	i32 imgLenX = 0;
 	i32 imgLenY = 0;
 	//Get the magic number bus
@@ -47,9 +48,9 @@ Digit* ReadDigits(const uint numDigits)
 	printf("magic = %6d\n", magic);
 	//Get image count
 	for(uint i = 0; i < 4; i++){
-		imgNum = (imgNum<<8)|(i32)fgetc(file);
+		imgCount = (imgCount<<8)|(i32)fgetc(file);
 	}
-	printf("imgNum = %6d\n", imgNum);
+	printf("imgCount = %6d\n", imgCount);
 	//Get column count
 	for(uint i = 0; i < 4; i++){
 		imgLenY = (imgLenY<<8)|(i32)fgetc(file);
@@ -60,34 +61,39 @@ Digit* ReadDigits(const uint numDigits)
 		imgLenX = (imgLenX<<8)|(i32)fgetc(file);
 	}
 	printf("imgLenX = %6d\n", imgLenX);
+	//Get buffer size
+	i32 imgSize = imgLenX * imgLenY;
 
-	// Coord digitPos = {0};
-	// Coord pixelPos = {0};
 	//Allocate the buffer
-	Digit *arr = malloc(numDigits * sizeof(Digit));
-	memset(arr, 0, numDigits * sizeof(Digit));
+	Digits buffer = {
+		calloc(imgCount, imgSize),
+		imgLenX,
+		imgLenY,
+		imgSize
+	};
+
 	//Copy image sauce to our big-ass buffer
 	for(uint digit = 0; digit < numDigits; digit++){
-		for(uint pixel = 0; pixel < DIGIT_TOTAL; pixel++){
+		for(uint pixel = 0; pixel < imgSize; pixel++){
 			const u8 val = fgetc(file);
-			arr[digit].arr[pixel] = val;
+			buffer.image[pixel + (digit * imgSize)] = val;
 		}
 	}
-	return arr;
+	return buffer;
 }
 
 int main(int argc, char const *argv[])
 {
 	const Length window = {800, 600};
 	init(window);
-	const uint numDigits = 1000;
-	Digit *arr = ReadDigits(numDigits);
+	const uint numDigits = 500;
+	Digits buffer = ReadDigits(numDigits);
 	while(1){
 		Ticks frameStart = getTicks();
 		clear();
 
-		for(uint digit = 0; digit < 100; digit++){
-			drawDigit(arr[digit].arr, digit);
+		for(uint digit = 0; digit < numDigits; digit++){
+			drawDigit(&buffer, digit);
 		}
 
 		draw();
