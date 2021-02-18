@@ -1,2 +1,2 @@
-# DogeLib
-Doge's swiss army knife of reusable code
+# DogeNet
+Neural network visualizer written in plain simple C
