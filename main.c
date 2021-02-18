@@ -14,23 +14,22 @@ typedef struct{
 
 u32 linearize(Digits * buf, u32 x, u32 y, u32 z)
 {
-	return (y * buf->width + x) + (z * buf->size);
+	return z * buf->size + y * buf->width + x;
 }
 
-void drawDigit(Digits *buffer, uint digitNum)
+void drawDigit(Digits *buffer, uint digitNum, Coord pos)
 {
-	const uint xdigits = gfx.xlen/buffer->width;
 	for(int x = 0; x < buffer->width; x++){
 		for(int y = 0; y  < buffer->height; y++){
 			u8 val = buffer->image[linearize(buffer, x, y, digitNum)];
 			setRGB(val, val, val);
-			drawPixel(x + (digitNum%xdigits)*buffer->width,
-			          y + (digitNum/xdigits)*buffer->height);
+			drawPixel(x + pos.x,
+			          y + pos.y);
 		}
 	}
 }
 
-Digits ReadDigits(const uint numDigits)
+Digits ReadDigits()
 {
 	File* file = fopen("./Data/train-images-idx3-ubyte", "r");
 	if(file == NULL){
@@ -73,7 +72,7 @@ Digits ReadDigits(const uint numDigits)
 	};
 
 	//Copy image sauce to our big-ass buffer
-	for(uint digit = 0; digit < numDigits; digit++){
+	for(uint digit = 0; digit < imgCount; digit++){
 		for(uint pixel = 0; pixel < imgSize; pixel++){
 			const u8 val = fgetc(file);
 			buffer.image[pixel + (digit * imgSize)] = val;
@@ -86,14 +85,23 @@ int main(int argc, char const *argv[])
 {
 	const Length window = {800, 600};
 	init(window);
-	const uint numDigits = 500;
-	Digits buffer = ReadDigits(numDigits);
+	const uint numDigits = 112;
+	Digits buffer = ReadDigits();
+	u32 imgCol = gfx.xlen - buffer.width;
+	u32 imgRow = gfx.ylen - buffer.height;
 	while(1){
 		Ticks frameStart = getTicks();
 		clear();
 
+		Coord pos = {0};
 		for(uint digit = 0; digit < numDigits; digit++){
-			drawDigit(&buffer, digit);
+			drawDigit(&buffer, digit, pos);
+			if((pos.x += buffer.width) > imgCol){
+				pos.x = 0;
+				if((pos.y += buffer.height) > imgRow){
+					pos.y = 0;
+				}
+			}
 		}
 
 		draw();
