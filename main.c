@@ -16,6 +16,19 @@ u32 linearize(u32 x, u32 y)
 	return y * DIGIT_LEN + x;		//linearize the sauce
 }
 
+void drawDigit(u8 *digit, uint digitNum)
+{
+	const uint xdigits = gfx.xlen/DIGIT_LEN;
+	for(int x = 0; x < DIGIT_LEN; x++){
+		for(int y = 0; y  < DIGIT_LEN; y++){
+			u8 val = digit[linearize(x, y)];
+			setRGB(val, val, val);
+			drawPixel(x + (digitNum%xdigits)*DIGIT_LEN,
+			          y + (digitNum/xdigits)*DIGIT_LEN);
+		}
+	}
+}
+
 Digit* ReadDigits(const uint numDigits)
 {
 	File* file = fopen("./Data/train-images-idx3-ubyte", "r");
@@ -31,21 +44,25 @@ Digit* ReadDigits(const uint numDigits)
 	for(uint i = 0; i < 4; i++){
 		magic = (magic<<8)|(i32)fgetc(file);
 	}
+	printf("magic = %6d\n", magic);
 	//Get image count
 	for(uint i = 0; i < 4; i++){
 		imgNum = (imgNum<<8)|(i32)fgetc(file);
 	}
+	printf("imgNum = %6d\n", imgNum);
 	//Get column count
 	for(uint i = 0; i < 4; i++){
 		imgLenY = (imgLenY<<8)|(i32)fgetc(file);
 	}
+	printf("imgLenY = %6d\n", imgLenY);
 	//Get row count
 	for(uint i = 0; i < 4; i++){
 		imgLenX = (imgLenX<<8)|(i32)fgetc(file);
 	}
+	printf("imgLenX = %6d\n", imgLenX);
 
-	Coord digitPos = {0};
-	Coord pixelPos = {0};
+	// Coord digitPos = {0};
+	// Coord pixelPos = {0};
 	//Allocate the buffer
 	Digit *arr = malloc(numDigits * sizeof(Digit));
 	memset(arr, 0, numDigits * sizeof(Digit));
@@ -54,25 +71,7 @@ Digit* ReadDigits(const uint numDigits)
 		for(uint pixel = 0; pixel < DIGIT_TOTAL; pixel++){
 			const u8 val = fgetc(file);
 			arr[digit].arr[pixel] = val;
-			//Do the draw
-			setRGB(val, val, val);
-			drawPixelCoord(
-				coordOffset(coordMul(digitPos, DIGIT_LEN),pixelPos)
-			);
-			if(pixelPos.x++ > DIGIT_LEN){
-				pixelPos.x = 0;
-				if(pixelPos.y++ > DIGIT_LEN){
-					pixelPos.y = 0;
-				}
-			}
 		}
-		if(digitPos.x++ > gfx.xlen/DIGIT_LEN){
-			digitPos.x = 0;
-			if(digitPos.y++ > gfx.ylen/DIGIT_LEN){
-				digitPos.y = 0;
-			}
-		}
-		draw();
 	}
 	return arr;
 }
@@ -81,12 +80,15 @@ int main(int argc, char const *argv[])
 {
 	const Length window = {800, 600};
 	init(window);
-
+	const uint numDigits = 1000;
+	Digit *arr = ReadDigits(numDigits);
 	while(1){
 		Ticks frameStart = getTicks();
 		clear();
 
-
+		for(uint digit = 0; digit < 100; digit++){
+			drawDigit(arr[digit].arr, digit);
+		}
 
 		draw();
 		events(frameStart + TPF);
