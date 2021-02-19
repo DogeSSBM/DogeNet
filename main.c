@@ -47,7 +47,6 @@ void deleteLayer(Layer *egg)
 {
 	free(egg->neurons);
 	free(egg->input);
-	free(egg->inputBias);
 	free(egg->inputWeight);
 	memset(egg, '\0', sizeof(Layer));
 }
