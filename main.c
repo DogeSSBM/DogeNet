@@ -5,8 +5,8 @@ typedef struct{
 	u8 *image;	//Image buffer
 	u32 width;
 	u32 height;
-	u32 size;	  //Size of the image in bytes (width * height)
-	u32 imgCount; //Images in the buffer
+	u32 size;	//Size of the image in bytes (width * height)
+	u32 imgCount; 	//Images in the buffer
 }Digits;
 
 //Layer of neurons
@@ -14,7 +14,7 @@ typedef struct Layer{
 	u32 layerSize;	//Amount of neurons in the layer
 	float *neurons;	//Array containing neuron vals
 	u32 inputSize;	//Input neuron count
-	float inputBias;//Array of input bias
+	float *inputBias;//Array of input bias
 	float *input;	//Array of input neurons
 	float *inputWeight;//Array of input weights
 }Layer;
@@ -37,9 +37,9 @@ Layer newLayer(u32 layerSize, u32 inputSize, float *inputBuffer)
 		layerSize,
 		calloc(layerSize, sizeof(float)),
 		inputSize,
-		0,
+		calloc(layerSize, sizeof(float)),
 		inputBuffer,
-		calloc(inputSize, sizeof(float))
+		calloc(inputSize * layerSize, sizeof(float))
 	};
 }
 
@@ -48,6 +48,7 @@ void deleteLayer(Layer *egg)
 	free(egg->neurons);
 	free(egg->input);
 	free(egg->inputWeight);
+	free(egg->inputBias);
 	memset(egg, '\0', sizeof(Layer));
 }
 
@@ -72,7 +73,18 @@ void deleteNetwork(Network *net)
 
 void stimulateNetwork(Network *net)
 {
-	
+	for(int l = 0; l < net->networkSize; l++){	//Go through each layer
+		for(int n = 0; n < net->layers[l].layerSize; n++){	//Each neuron
+			int ni = n * net->layers[l].inputSize;	//Neuron index in weight array
+			float wsum = 0;
+			for(int i = 0; i < net->layers[l].inputSize; i++){	//And each input
+				wsum += net->layers[l].inputWeight[ni + i] //Weighted sum of inputs
+					* net->layers[l].input[i];
+			}
+			wsum += net->layers[l].inputBias[n];	//Add bias to weighted sum
+			net->layers[l].neurons[n] = sigmoid(wsum);	//We're done!
+		}
+	}
 }
 
 //Digit routines
