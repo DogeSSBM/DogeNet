@@ -19,6 +19,12 @@ typedef struct Layer{
 	float *inputWeight;//Array of input weights
 }Layer;
 
+//Network of layers
+typedef struct Network{
+	u32 networkSize;
+	Layer *layers;
+}Network;
+
 //Neural net routines
 Layer newLayer(u32 layerSize, u32 inputSize, float *inputBuffer)
 {
@@ -41,9 +47,28 @@ void deleteLayer(Layer *egg)
 	memset(egg, '\0', sizeof(Layer));
 }
 
-void stimulateNetwork(Layer first, Layer second, Layer output)
+Network *newNetwork(u32 netSize)
 {
+	Network *net = calloc(1, sizeof(Network));
+	*net = (Network){
+		netSize,
+		calloc(netSize, sizeof(Layer))
+	};
+	return net;
+}
 
+void deleteNetwork(Network *net)
+{
+	for(int i = 0; i < net->networkSize; i++) {
+		deleteLayer(net->layers+i);
+	}
+	free(net->layers);
+	free(net);
+}
+
+void stimulateNetwork(Network *net)
+{
+	
 }
 
 //Digit routines
@@ -127,9 +152,10 @@ int main(int argc, char const *argv[])
 	Digits buffer = ReadDigits();
 	//Setup neural network
 	float *inputBuffer = calloc(buffer.size, sizeof(float));
-	Layer first = newLayer(16, buffer.size, inputBuffer);
-	Layer second = newLayer(16, first.layerSize, first.neurons);
-	Layer output = newLayer(10, second.layerSize, second.neurons);
+	Network *net = newNetwork(3);
+	net->layers[0] = newLayer(16, buffer.size, inputBuffer);
+	net->layers[1] = newLayer(16, net->layers[0].layerSize, net->layers[0].neurons);
+	net->layers[2] = newLayer(10, net->layers[1].layerSize, net->layers[1].neurons);
 	//For drawing stuff
 	u32 imgCol = gfx.xlen - buffer.width;
 	u32 imgRow = gfx.ylen - buffer.height;
