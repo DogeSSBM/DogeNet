@@ -14,8 +14,8 @@ typedef struct Layer{
 	u32 layerSize;	//Amount of neurons in the layer
 	float *neurons;	//Array containing neuron vals
 	u32 inputSize;	//Input neuron count
+	float inputBias;//Array of input bias
 	float *input;	//Array of input neurons
-	float *inputBias;	//Array of input bias'
 	float *inputWeight;//Array of input weights
 }Layer;
 
@@ -26,6 +26,11 @@ typedef struct Network{
 }Network;
 
 //Neural net routines
+float sigmoid(float x)
+{
+	return 1.0 / (powf(2.0, -x) + 1);
+}
+
 Layer newLayer(u32 layerSize, u32 inputSize, float *inputBuffer)
 {
 	return (Layer){
