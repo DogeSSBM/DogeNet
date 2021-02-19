@@ -1,18 +1,52 @@
 #include "Includes.h"
 
-typedef struct node {
-	float (*conv)(float);	//do math shit
-	int x,y;		//Visualization coordinates
-}node;
-
+//Images are stored here
 typedef struct{
-	u8 *image;	//Store the image
+	u8 *image;	//Image buffer
 	u32 width;
 	u32 height;
-	u32 size;
-	u32 imgCount;
+	u32 size;	  //Size of the image in bytes (width * height)
+	u32 imgCount; //Images in the buffer
 }Digits;
 
+//Layer of neurons
+typedef struct Layer{
+	u32 layerSize;	//Amount of neurons in the layer
+	float *neurons;	//Array containing neuron vals
+	u32 inputSize;	//Input neuron count
+	float *input;	//Array of input neurons
+	float *inputBias;	//Array of input bias'
+	float *inputWeight;//Array of input weights
+}Layer;
+
+//Neural net routines
+Layer newLayer(u32 layerSize, u32 inputSize, float *inputBuffer)
+{
+	return (Layer){
+		layerSize,
+		calloc(layerSize, sizeof(float)),
+		inputSize,
+		inputBuffer,
+		calloc(inputSize, sizeof(float)),
+		calloc(inputSize, sizeof(float))
+	};
+}
+
+void deleteLayer(Layer *egg)
+{
+	free(egg->neurons);
+	free(egg->input);
+	free(egg->inputBias);
+	free(egg->inputWeight);
+	memset(egg, '\0', sizeof(Layer));
+}
+
+void stimulateNetwork(Layer first, Layer second, Layer output)
+{
+
+}
+
+//Digit routines
 u32 linearize(Digits * buf, u32 x, u32 y, u32 z)
 {
 	return z * buf->size + y * buf->width + x;
@@ -83,12 +117,20 @@ Digits ReadDigits()
 	return buffer;
 }
 
+//Main
 int main(int argc, char const *argv[])
 {
 	const Length window = {800, 600};
 	init(window);
+	//Read in sample numbers
 	const uint numDigits = 112;
 	Digits buffer = ReadDigits();
+	//Setup neural network
+	float *inputBuffer = calloc(buffer.size, sizeof(float));
+	Layer first = newLayer(16, buffer.size, inputBuffer);
+	Layer second = newLayer(16, first.layerSize, first.neurons);
+	Layer output = newLayer(10, second.layerSize, second.neurons);
+	//For drawing stuff
 	u32 imgCol = gfx.xlen - buffer.width;
 	u32 imgRow = gfx.ylen - buffer.height;
 	while(1){

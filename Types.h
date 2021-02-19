@@ -66,6 +66,10 @@ typedef union{
 		int y;
 	};
 	struct{
+		int width;
+		int height;
+	};
+	struct{
 		int min;
 		int max;
 	};
