@@ -37,8 +37,8 @@ Layer newLayer(u32 layerSize, u32 inputSize, float *inputBuffer)
 		layerSize,
 		calloc(layerSize, sizeof(float)),
 		inputSize,
+		0,
 		inputBuffer,
-		calloc(inputSize, sizeof(float)),
 		calloc(inputSize, sizeof(float))
 	};
 }
