@@ -172,6 +172,7 @@ int main(int argc, char const *argv[])
 	net->layers[0] = newLayer(16, buffer.size, inputBuffer);
 	net->layers[1] = newLayer(16, net->layers[0].layerSize, net->layers[0].neurons);
 	net->layers[2] = newLayer(10, net->layers[1].layerSize, net->layers[1].neurons);
+	stimulateNetwork(net);
 	//For drawing stuff
 	u32 imgCol = gfx.xlen - buffer.width;
 	u32 imgRow = gfx.ylen - buffer.height;
@@ -193,5 +194,6 @@ int main(int argc, char const *argv[])
 		draw();
 		events(frameStart + TPF);
 	}
+	deleteNetwork(net);
 	return 0;
 }
