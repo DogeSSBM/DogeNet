@@ -46,7 +46,6 @@ Layer newLayer(u32 layerSize, u32 inputSize, float *inputBuffer)
 void deleteLayer(Layer *egg)
 {
 	free(egg->neurons);
-	free(egg->input);
 	free(egg->inputWeight);
 	free(egg->inputBias);
 	memset(egg, '\0', sizeof(Layer));
@@ -158,6 +157,17 @@ Digits ReadDigits()
 	return buffer;
 }
 
+//Cleanup allocated thingeys
+Network *globnet = NULL;
+u8 *globimg = NULL;
+float *globbuf = NULL;
+void cleanup()
+{
+	free(globimg);
+	deleteNetwork(globnet);
+	free(globbuf);
+}
+
 //Main
 int main(int argc, char const *argv[])
 {
@@ -173,6 +183,11 @@ int main(int argc, char const *argv[])
 	net->layers[1] = newLayer(16, net->layers[0].layerSize, net->layers[0].neurons);
 	net->layers[2] = newLayer(10, net->layers[1].layerSize, net->layers[1].neurons);
 	stimulateNetwork(net);
+	//Cleanup setup
+	globnet = net;
+	globimg = buffer.image;
+	globbuf = inputBuffer;
+	atexit(cleanup);
 	//For drawing stuff
 	u32 imgCol = gfx.xlen - buffer.width;
 	u32 imgRow = gfx.ylen - buffer.height;
@@ -194,6 +209,4 @@ int main(int argc, char const *argv[])
 		draw();
 		events(frameStart + TPF);
 	}
-	deleteNetwork(net);
-	return 0;
 }
